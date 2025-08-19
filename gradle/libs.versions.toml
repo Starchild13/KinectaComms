@@ -2,7 +2,7 @@
 accompanistPermissions = "<latest-version>"
 accompanistPermissionsVersion = "0.37.3"
 activityComposeVersion = "1.10.1"
-agp = "8.12.0"
+agp = "8.12.1"
 cameraCamera2 = "1.4.2"
 coreAipacks = "1.8.0"
 coreKtxVersion = "1.17.0"
@@ -17,6 +17,8 @@ kotlinStdlib = "2.2.0"
 lifecycleRuntimeKtx = "2.9.2"
 activityCompose = "1.10.1"
 composeBom = "2025.08.00"
+mediapipeFramework = "0.10.3"
+mediapipeTasksVision = "0.10.3"
 navigationCompose = "2.9.3"
 tasksVision = "0.20230731"
 tensorflowLite = "2.17.0"
@@ -27,6 +29,7 @@ tensorflowLiteMetadata = "0.5.0"
 aiDelivery = "0.1.1-alpha01"
 firebaseFirestoreKtx = "26.0.0"
 gamesTextInput = "4.0.0"
+roomKtx = "2.7.2"
 
 
 [libraries]
@@ -57,6 +60,8 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlib" }
+mediapipe-framework = { module = "com.google.mediapipe:mediapipe-framework", version.ref = "mediapipeFramework" }
+mediapipe-tasks-vision = { module = "com.google.mediapipe:mediapipe-tasks-vision", version.ref = "mediapipeTasksVision" }
 tasks-vision = { module = "com.google.mediapipe:tasks-vision", version.ref = "tasksVision" }
 tensorflow-lite = { module = "org.tensorflow:tensorflow-lite", version.ref = "tensorflowLite" }
 tensorflow-lite-gpu = { module = "org.tensorflow:tensorflow-lite-gpu", version.ref = "tensorflowLiteGpu" }
@@ -66,6 +71,7 @@ tensorflow-lite-metadata = { group = "org.tensorflow", name = "tensorflow-lite-m
 ai-delivery = { group = "com.google.android.play", name = "ai-delivery", version.ref = "aiDelivery" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 androidx-games-text-input = { group = "androidx.games", name = "games-text-input", version.ref = "gamesTextInput" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 
 
 [plugins]

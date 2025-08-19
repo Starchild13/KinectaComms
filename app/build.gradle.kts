@@ -1,6 +1,8 @@
 import com.android.build.gradle.internal.dsl.AaptOptions
 import org.gradle.kotlin.dsl.implementation
 
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -94,6 +96,7 @@ dependencies {
     implementation(libs.tensorflow.lite.metadata)
     implementation(libs.ai.delivery)
     implementation(libs.androidx.games.text.input)
+    implementation(libs.androidx.room.ktx)
 
 
     // Testing
@@ -112,6 +115,10 @@ dependencies {
     implementation(libs.androidx.activity.compose.v182)
     implementation(libs.androidx.core.ktx.v1131)
     implementation(libs.ui)
+
+
+
+
 
     // Mediapipe Library
     implementation(libs.tasks.vision)

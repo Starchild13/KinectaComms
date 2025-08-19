@@ -1,51 +1,62 @@
 package com.example.kinectacomms
 
 import android.content.Context
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import com.google.android.play.core.aipacks.AiPackManager
 import com.google.android.play.core.aipacks.AiPackManagerFactory
 import com.google.android.play.core.aipacks.AiPackState
 import com.google.android.play.core.aipacks.AiPackStateUpdateListener
 import com.google.android.play.core.aipacks.model.AiPackStatus
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import java.io.InputStreamReader
 import java.nio.MappedByteBuffer
 import java.nio.channels.FileChannel
+
+
+
 
 class ModelLoader(private val context: Context) {
 
     companion object {
-        private const val AI_PACK_NAME = "ai_model_pack"
         private const val MODEL_FILE = "model_int8_qat.tflite"
         private const val LABELS_FILE = "labels.txt"
     }
 
-    private val aiPackManager: AiPackManager = AiPackManagerFactory.getInstance(context)
+    fun isModelAvailable(): Boolean {
+        val files = context.assets.list("")?.toList() ?: emptyList()
+        Log.d("ModelLoader", "Assets files: $files") // Check Logcat
+        return files.contains(MODEL_FILE) && files.contains(LABELS_FILE)
+    }
 
-    fun isModelAvailable(): Boolean =
-        aiPackManager.getPackLocation(AI_PACK_NAME) != null
-
+    @RequiresApi(Build.VERSION_CODES.O)
     @Throws(IOException::class)
     fun loadModel(): MappedByteBuffer {
-        val packLocation = aiPackManager.getPackLocation(AI_PACK_NAME)
-            ?: throw IOException("AI pack not downloaded")
-
-        val modelFile = File(packLocation.assetsPath(), MODEL_FILE)
-        FileInputStream(modelFile).use { inputStream ->
-            val channel = inputStream.channel
-            return channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size())
-        }
+        val fileDescriptor = context.assets.openFd(MODEL_FILE)
+        val inputStream = fileDescriptor.createInputStream()
+        val channel = inputStream.channel
+        return channel.map(FileChannel.MapMode.READ_ONLY, fileDescriptor.startOffset, fileDescriptor.declaredLength)
     }
 
     @Throws(IOException::class)
     fun loadLabels(): List<String> {
-        val packLocation = aiPackManager.getPackLocation(AI_PACK_NAME)
-            ?: throw IOException("AI pack not downloaded")
-
-        val labelsFile = File(packLocation.assetsPath(), LABELS_FILE)
-        return labelsFile.bufferedReader().use { it.readLines() }
+        context.assets.open(LABELS_FILE).use { inputStream ->
+            BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                return reader.readLines()
+            }
+        }
     }
+}
 
+
+
+
+    // Commented out Play Store download logic
+    /*
     fun downloadModel(
         onProgress: (Float) -> Unit,
         onSuccess: () -> Unit,
@@ -68,9 +79,6 @@ class ModelLoader(private val context: Context) {
                         onError("Download failed: ${state.errorCode()}")
                         aiPackManager.unregisterListener(this)
                     }
-                    else -> {
-                        // Handle other states if needed
-                    }
                 }
             }
         }
@@ -85,6 +93,8 @@ class ModelLoader(private val context: Context) {
                 }
             }
     }
-}
+    */
+
+
 
 

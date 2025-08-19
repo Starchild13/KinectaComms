@@ -6,6 +6,7 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,16 +16,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,21 +39,22 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ObjectDetectionScreen(navController: NavController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
     val detector = remember { ObjectDetector(context) }
-    val modelLoader = remember { ModelLoader(context) }
 
     var selectedImage by remember { mutableStateOf<Bitmap?>(null) }
-    var detections by remember { mutableStateOf<List<ObjectDetector.DetectionResult>>(emptyList()) }
+    var detectionResult by remember { mutableStateOf<ObjectDetector.DetectionResultWithBitmap?>(null) }
     var isLoading by remember { mutableStateOf(false) }
-    var downloadProgress by remember { mutableStateOf(0f) }
-    var showDownloadDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var modelInitialized by remember { mutableStateOf(false) }
 
+    // Image picker
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -70,7 +69,12 @@ fun ObjectDetectionScreen(navController: NavController) {
                     }
 
                     selectedImage = bitmap
-                    detections = detector.detect(bitmap)
+
+                    if (modelInitialized) {
+                        detectionResult = detector.detectTopThree(bitmap)
+                    } else {
+                        errorMessage = "Model not initialized"
+                    }
                 } catch (e: Exception) {
                     errorMessage = "Failed to process image: ${e.message}"
                 } finally {
@@ -80,13 +84,12 @@ fun ObjectDetectionScreen(navController: NavController) {
         }
     }
 
-    // Check model availability on launch
+    // Initialize model
     LaunchedEffect(Unit) {
-        if (!modelLoader.isModelAvailable()) {
-            showDownloadDialog = true
-        } else {
-            detector.initialize()
-        }
+        val initialized = detector.initialize()
+        if (!initialized) {
+            errorMessage = "Failed to initialize model. Ensure model and labels exist in assets."
+        } else modelInitialized = true
     }
 
     Scaffold(
@@ -110,7 +113,7 @@ fun ObjectDetectionScreen(navController: NavController) {
         ) {
             Button(
                 onClick = { imagePicker.launch("image/*") },
-                enabled = !isLoading && !showDownloadDialog
+                enabled = !isLoading
             ) {
                 Text(if (isLoading) "Processing..." else "Select Image")
             }
@@ -118,23 +121,29 @@ fun ObjectDetectionScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             selectedImage?.let { bitmap ->
+                // Display bitmap with drawn boxes if detection ran
+                val displayBitmap = detectionResult?.bitmap ?: bitmap
+
                 Image(
-                    bitmap = bitmap.asImageBitmap(),
+                    bitmap = displayBitmap.asImageBitmap(),
                     contentDescription = "Selected Image",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp)
                 )
+            }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Show prediction results at the bottom
+            detectionResult?.detections?.let { detections ->
                 if (detections.isNotEmpty()) {
-                    Text("Detection Results:", style = MaterialTheme.typography.headlineSmall)
-                    Spacer(modifier = Modifier.height(8.dp))
-
+                    Text("Top Predictions:", style = MaterialTheme.typography.headlineSmall)
                     Column(modifier = Modifier.fillMaxWidth()) {
                         detections.forEach { detection ->
                             Text(
-                                text = "${detection.label} (${"%.1f".format(detection.confidence * 100)}%)",
-                                modifier = Modifier.padding(4.dp)
+                                "${detection.label} (${String.format("%.1f", detection.confidence * 100)}%)",
+                                Modifier.padding(4.dp)
                             )
                         }
                     }
@@ -142,6 +151,7 @@ fun ObjectDetectionScreen(navController: NavController) {
             }
 
             errorMessage?.let { message ->
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = message,
                     color = MaterialTheme.colorScheme.error,
@@ -150,7 +160,12 @@ fun ObjectDetectionScreen(navController: NavController) {
             }
         }
     }
+}
 
+
+
+// Download dialog removed since we only load locally
+    /*
     if (showDownloadDialog) {
         AlertDialog(
             onDismissRequest = { showDownloadDialog = false },
@@ -203,3 +218,6 @@ fun ObjectDetectionScreen(navController: NavController) {
         )
     }
 }
+   */
+
+
